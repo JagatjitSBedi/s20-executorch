@@ -1,0 +1,15 @@
+name: Export DeepSeek S20 PTE
+on: [push, workflow_dispatch]
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with: {python-version: '3.12'}
+    - run: pip install torch torchvision torchaudio executorch
+    - run: python3 export_deepseek.py  # Add your exporter here
+    - uses: actions/upload-artifact@v4
+      with:
+        name: s20_deepseek_pte
+        path: s20_deepseek.pte
