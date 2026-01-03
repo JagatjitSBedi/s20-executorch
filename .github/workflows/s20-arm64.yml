@@ -1,0 +1,68 @@
+name: S20 DeepSeek ARM64 .pte
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: 'DeepSeek HF ID'
+        required: true
+        default: 'deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct'
+jobs:
+  arm64:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - name: ARM64 Export
+      uses: uraimo/run-on-arch-action@v2
+      with:
+        arch: aarch64
+        distro: ubuntu24.04
+        run: |
+          pip install --upgrade pip torch torchvision torchaudio --pre --index-url https://download.pytorch.org/whl/nightly/cpu
+          pip install executorch[export] transformers accelerate bitsandbytes optimum[exporters]
+          python -c "
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM
+from executorch.exir_server import ExirServer
+import sys
+
+model_id = '${{ github.event.inputs.model }}'
+print(f'Loading {model_id}...')
+
+try:
+    tokenizer = AutoTokenizer.from_pretrained(model_id)
+    model = AutoModelForCausalLM.from_pretrained(
+        model_id,
+        torch_dtype=torch.float16,
+        device_map='cpu',
+        trust_remote_code=True
+    )
+    
+    # Prepare example inputs
+    inputs = tokenizer('Hello world', return_tensors='pt')
+    
+    # Export to Edge
+    exir_server = ExirServer()
+    edge_model = exir_server.export_edge(
+        model,
+        inputs,
+        compiler_work_dir='./tmp_export'
+    )
+    
+    # Save .pte
+    edge_model._save('s20_deepseek_${{ github.event.inputs.model.split('/')[-1] }}.pte')
+    print('✅ Exported .pte')
+    
+except Exception as e:
+    print(f'❌ Export failed: {e}', file=sys.stderr)
+    sys.exit(1)
+          "
+    - name: Upload .pte
+      uses: actions/upload-artifact@v4
+      with:
+        name: s20-deepseek-${{ github.event.inputs.model.split('/')[1] }}.pte
+        path: s20_deepseek_*.pte
