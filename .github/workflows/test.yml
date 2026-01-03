@@ -1,0 +1,8 @@
+name: Test PyTorch
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - run: pip install torch
+    - run: python -c "import torch; print(torch.__version__)"
