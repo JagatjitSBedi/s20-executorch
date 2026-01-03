@@ -8,8 +8,8 @@ jobs:
     - uses: actions/setup-python@v5
       with: {python-version: '3.12'}
     - run: pip install torch torchvision torchaudio executorch
-    - run: python3 export_deepseek.py  # Add your exporter here
+    - run: python3 export_deepseek.py
     - uses: actions/upload-artifact@v4
       with:
-        name: s20_deepseek_pte
-        path: s20_deepseek.pte
+        name: executorch-artifacts
+        path: '*s20*.pte'
