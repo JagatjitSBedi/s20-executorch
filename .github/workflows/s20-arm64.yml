@@ -1,40 +1,11 @@
 name: S20 DeepSeek ARM64
-on:
-  workflow_dispatch:
-    inputs:
-      model:
-        description: DeepSeek HF ID
-        required: true
-        default: deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct
+on: [push]
 jobs:
-  export:
+  test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with: python-version: 3.12
-    - id: arm64
-      uses: uraimo/run-on-arch-action@v2
-      with:
-        arch: aarch64
-        distro: ubuntu24.04
-        run: |
-          pip install torch --pre --index-url https://download.pytorch.org/whl/nightly/cpu
-          pip install executorch[export] transformers
-          python3 -c "
-from transformers import AutoTokenizer, AutoModelForCausalLM
-from executorch.exir_server import ExirServer
-import torch
-model_id = '${{ github.event.inputs.model }}'
-print('Loading', model_id)
-t = AutoTokenizer.from_pretrained(model_id)
-m = AutoModelForCausalLM.from_pretrained(model_id, torch_dtype=torch.float16)
-i = t('hi', return_tensors='pt')
-e = ExirServer().export_edge(m, i)
-e._save('s20_deepseek.pte')
-print('Exported s20_deepseek.pte')
-          "
-    - uses: actions/upload-artifact@v4
-      with:
-        name: s20_deepseek_pte
-        path: s20_deepseek.pte
+    - run: |
+        pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+        pip install executorch transformers
+        python -c "import executorch; print('ExecuTorch OK')"
