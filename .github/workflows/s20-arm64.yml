@@ -20,4 +20,7 @@ import torch
 print('PyTorch', torch.__version__)
 import executorch
 print('ExecuTorch OK')
-          "
+          from transformers import AutoTokenizer, AutoModelForCausalLM
+          from executorch.exir_server import ExirServer
+          model_id = 'deepseek-ai/DeepSeek-Coder-V2-Lite-Instruct'
+          print('Loading', model          "
