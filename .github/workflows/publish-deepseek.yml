@@ -1,0 +1,22 @@
+name: Publish DeepSeek S20 PTE
+on: [push]
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with: {python-version: '3.12'}
+    - run: pip install torch torchvision torchaudio executorch
+    - run: python3 complete_deepseek_export.py
+    - uses: actions/upload-artifact@v4
+      with:
+        name: s20-deepseek-pte
+        path: s20_deepseek.pte
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      if: github.ref == 'refs/heads/main'
+      with:
+        files: s20_deepseek.pte
+        tag_name: v1-deepseek-s20
+        generate_release_notes: true
